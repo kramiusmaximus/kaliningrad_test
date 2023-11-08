@@ -26,15 +26,13 @@ chatgpt_chain = LLMChain(
 )
 
 
-
-def forecast_summary(city:str, data:WeatherForecastModel) -> str:
+def forecast_summary(city: str, data: WeatherForecastModel) -> str:
 
     output = chatgpt_chain.predict(
-    human_input=f'Используя ниже указанные данные для города {city}, напиши краткий прогноз погоды на сегодняшний день. Будь по веселее и используй эмодзи.\n\
+        human_input=f'Используя ниже указанные данные для города {city}, напиши краткий прогноз погоды на сегодняшний день. Будь по веселее и используй эмодзи.\n\
                 """\n\
                 {data.model_dump_json()}\n\
                 """'
     )
     print(output)
     return output
-    

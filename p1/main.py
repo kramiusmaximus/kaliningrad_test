@@ -7,31 +7,37 @@ import os
 import pandas as pd
 import uvicorn
 import logging
-from models import *
+from models import WeatherResponseModel
 
 
-
+load_dotenv()
 logging.basicConfig(level=logging.INFO, handlers=[logging.StreamHandler()])
 logger = logging.getLogger(__name__)
+TTL = 1800
 
 app = FastAPI()
-load_dotenv()
 
-cache = TTLCache(maxsize=1000, ttl=1800)
-city_df = pd.read_csv('../city.csv')
-city_df['City'] = city_df['City'].str.lower()
+cache = TTLCache(maxsize=1000, ttl=TTL)
+city_df = pd.read_csv("../city.csv")
+city_df["City"] = city_df["City"].str.lower()
+
 
 def get_lat_long(city):
     city = city.lower()
-    if city not in city_df['City'].values:
+    if city not in city_df["City"].values:
         raise HTTPException(status_code=422, detail="City not found")
-    lat, long = city_df[city_df['City'] == city][['Latitude', 'Longitude']].iloc[0]
+    lat, long = city_df[city_df["City"] == city][["Latitude", "Longitude"]].iloc[0]
     return lat, long
+
 
 @cached(cache, key=lambda lat, long: (lat, long))
 def get_weather_data(lat, long):
-    api_url = f"https://api.weather.yandex.ru/v2/informers?lat={lat}&lon={long}&lang=ru_RU"
-    response = requests.get(api_url, headers={"X-Yandex-API-Key": os.getenv("YANDEX_API_KEY")})
+    api_url = (
+        f"https://api.weather.yandex.ru/v2/informers?lat={lat}&lon={long}&lang=ru_RU"
+    )
+    response = requests.get(
+        api_url, headers={"X-Yandex-API-Key": os.getenv("YANDEX_API_KEY")}
+    )
     return response
 
 
@@ -58,12 +64,13 @@ async def get_curr_weather(city: str):
             raise HTTPException(status_code=400, detail=str(e))
     response_json = response.json()
     weather_data = {
-        'temp': response_json['fact']['temp'],
-        'pressure_mm': response_json['fact']['pressure_mm'],
-        'wind_speed': response_json['fact']['wind_speed']
+        "temp": response_json["fact"]["temp"],
+        "pressure_mm": response_json["fact"]["pressure_mm"],
+        "wind_speed": response_json["fact"]["wind_speed"],
     }
 
     return weather_data
+
 
 @app.get("/forecast")
 async def get_weather_forecast(city: str):
@@ -79,10 +86,10 @@ async def get_weather_forecast(city: str):
             validate_weather_response(response)
         except ValidationError as e:
             raise HTTPException(status_code=400, detail=str(e))
-            
+
     response_json = response.json()
-    
-    return response_json['forecast']
+
+    return response_json["forecast"]
 
 
 if __name__ == "__main__":

@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 from typing import Optional, List
 
+
 class WeatherFactModel(BaseModel):
     temp: float
     pressure_mm: float
@@ -37,6 +38,7 @@ class WeatherForecastModel(BaseModel):
     moon_code: int
     moon_text: str
     parts: List[PartModel]
+
 
 class WeatherResponseModel(BaseModel):
     fact: WeatherFactModel
